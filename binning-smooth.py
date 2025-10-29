@@ -38,6 +38,7 @@ def print_bins(original, smoothed, method):
 
 def main():
     data = get_data()
+    # 12, 15, 24, 29, 35, 41, 47, 53, 62, 68, 77, 83, 91, 98, 100
     bin_size = int(input("Enter bin size: "))
     
     bins = create_bins(data, bin_size)
@@ -52,3 +53,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
