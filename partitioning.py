@@ -63,6 +63,7 @@ def equal_frequency_partitioning(data, num_intervals):
 
 def main():
     data = get_user_data()
+    # 12, 15, 24, 29, 35, 41, 47, 53, 62, 68, 77, 83, 91, 98, 100
     num_intervals = int(input("Enter number of intervals: "))
 
     print("\nChoose partitioning method:")
@@ -90,3 +91,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
