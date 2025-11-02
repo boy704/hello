@@ -1,0 +1,214 @@
+CREATE TABLE Region (
+    region_id INT PRIMARY KEY,
+    region_name VARCHAR(50)
+);
+
+CREATE TABLE Branch (
+    branch_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    region_id INT,
+    FOREIGN KEY (region_id) REFERENCES Region(region_id)
+);
+
+CREATE TABLE Location (
+    location_id INT PRIMARY KEY,
+    city VARCHAR(50),
+    state VARCHAR(50),
+    country VARCHAR(50)
+);
+
+CREATE TABLE Department (
+    department_id INT PRIMARY KEY,
+    department_name VARCHAR(50),
+    role VARCHAR(50)
+);
+
+CREATE TABLE Supplier (
+    supplier_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    contact VARCHAR(50)
+);
+
+CREATE TABLE Category (
+    category_id INT PRIMARY KEY,
+    category_name VARCHAR(50)
+);
+
+CREATE TABLE Product (
+    product_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    category_id INT,
+    price DECIMAL(10,2),
+    supplier_id INT,
+    FOREIGN KEY (category_id) REFERENCES Category(category_id),
+    FOREIGN KEY (supplier_id) REFERENCES Supplier(supplier_id)
+);
+
+CREATE TABLE Store (
+    store_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    type VARCHAR(50),
+    location_id INT,
+    branch_id INT,
+    FOREIGN KEY (location_id) REFERENCES Location(location_id),
+    FOREIGN KEY (branch_id) REFERENCES Branch(branch_id)
+);
+
+CREATE TABLE Employee (
+    employee_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    gender VARCHAR(10),
+    age INT,
+    contact VARCHAR(20),
+    department_id INT,
+    store_id INT,
+    FOREIGN KEY (department_id) REFERENCES Department(department_id),
+    FOREIGN KEY (store_id) REFERENCES Store(store_id)
+);
+
+CREATE TABLE Customer (
+    customer_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    age INT,
+    branch VARCHAR(50),
+    gender VARCHAR(10),
+    location_id INT,
+    FOREIGN KEY (location_id) REFERENCES Location(location_id)
+);
+
+CREATE TABLE Time (
+    time_id INT PRIMARY KEY,
+    date DATE,
+    month VARCHAR(20),
+    year INT,
+    day_of_week VARCHAR(15)
+);
+
+CREATE TABLE Fact_Sales (
+    sale_id INT PRIMARY KEY,
+    product_id INT,
+    customer_id INT,
+    store_id INT,
+    branch_id INT,
+    supplier_id INT,
+    employee_id INT,
+    time_id INT,
+    quantity_id INT,
+    sales_amount DECIMAL(10,2),
+    discount DECIMAL(10,2),
+    profit DECIMAL(10,2),
+    FOREIGN KEY (product_id) REFERENCES Product(product_id),
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id),
+    FOREIGN KEY (store_id) REFERENCES Store(store_id),
+    FOREIGN KEY (branch_id) REFERENCES Branch(branch_id),
+    FOREIGN KEY (supplier_id) REFERENCES Supplier(supplier_id),
+    FOREIGN KEY (employee_id) REFERENCES Employee(employee_id),
+    FOREIGN KEY (time_id) REFERENCES Time(time_id)
+);
+
+
+INSERT INTO Region VALUES (1, 'North'), (2, 'South');
+
+INSERT INTO Branch VALUES (1, 'Branch A', 1), (2, 'Branch B', 2);
+
+INSERT INTO Location VALUES
+(1, 'Mumbai', 'Maharashtra', 'India'),
+(2, 'Delhi', 'Delhi', 'India');
+
+INSERT INTO Department VALUES
+(1, 'Sales', 'Manager'), (2, 'Support', 'Assistant');
+
+INSERT INTO Supplier VALUES
+(1, 'ABC Corp', '9876543210'),
+(2, 'XYZ Ltd', '8765432109');
+
+INSERT INTO Category VALUES
+(1, 'Electronics'), (2, 'Furniture');
+
+INSERT INTO Product VALUES
+(1, 'TV', 1, 40000, 1),
+(2, 'Sofa', 2, 20000, 2);
+
+INSERT INTO Store VALUES
+(1, 'Store A', 'Retail', 1, 1),
+(2, 'Store B', 'Online', 2, 2);
+
+INSERT INTO Employee VALUES
+(1, 'Ravi', 'Male', 30, '9999999999', 1, 1),
+(2, 'Priya', 'Female', 28, '8888888888', 2, 2);
+
+INSERT INTO Customer VALUES
+(1, 'Amit', 25, 'Branch A', 'Male', 1),
+(2, 'Sneha', 27, 'Branch B', 'Female', 2);
+
+INSERT INTO Time VALUES
+(1, '2025-10-01', 'October', 2025, 'Wednesday'),
+(2, '2025-10-02', 'October', 2025, 'Thursday');
+
+INSERT INTO Fact_Sales VALUES
+(1, 1, 1, 1, 1, 1, 1, 1, 2, 80000, 2000, 5000),
+(2, 2, 2, 2, 2, 2, 2, 2, 1, 20000, 500, 3000);
+
+//rolluup
+
+SELECT 
+    b.name AS Branch,
+    SUM(f.sales_amount) AS Total_Sales
+FROM Fact_Sales f
+JOIN Branch b ON f.branch_id = b.branch_id
+GROUP BY b.name WITH ROLLUP;
+
+//drilldown
+
+
+SELECT 
+    t.year,
+    t.month,
+    p.name AS Product,
+    SUM(f.sales_amount) AS Total_Sales
+FROM Fact_Sales f
+JOIN Time t ON f.time_id = t.time_id
+JOIN Product p ON f.product_id = p.product_id
+GROUP BY t.year, t.month, p.name
+ORDER BY t.year, t.month;
+
+
+//slice
+
+
+SELECT 
+    p.name AS Product,
+    SUM(f.sales_amount) AS Total_Sales
+FROM Fact_Sales f
+JOIN Product p ON f.product_id = p.product_id
+JOIN Time t ON f.time_id = t.time_id
+WHERE t.month = 'October' AND t.year = 2025
+GROUP BY p.name;
+
+
+/dice
+
+
+SELECT 
+    p.name AS Product,
+    SUM(f.sales_amount) AS Total_Sales
+FROM Fact_Sales f
+JOIN Product p ON f.product_id = p.product_id
+JOIN Time t ON f.time_id = t.time_id
+WHERE t.month = 'October' AND t.year = 2025
+GROUP BY p.name;
+
+
+
+/pivetrt
+
+
+SELECT 
+    b.name AS Branch,
+    SUM(CASE WHEN p.name = 'TV' THEN f.sales_amount ELSE 0 END) AS TV_Sales,
+    SUM(CASE WHEN p.name = 'Sofa' THEN f.sales_amount ELSE 0 END) AS Sofa_Sales,
+    SUM(f.sales_amount) AS Total_Sales
+FROM Fact_Sales f
+JOIN Branch b ON f.branch_id = b.branch_id
+JOIN Product p ON f.product_id = p.product_id
+GROUP BY b.name;
